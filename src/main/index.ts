@@ -1,9 +1,40 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import fs from 'fs/promises'
+import path from 'path'
 
-function createWindow(): void {
+interface Config {
+  openAIBaseURL: string
+  apiKey: string
+  model: string
+}
+
+interface Image {
+  id: string
+  src: string
+  caption: string
+  tags: string[]
+}
+
+interface StoreSchema {
+  settings: Config
+  images: Image[]
+}
+
+interface Store<T> {
+  get<K extends keyof T>(key: K): T[K]
+  set<K extends keyof T>(key: K, value: T[K]): void
+}
+
+let store: Store<StoreSchema>
+const initStore = async (): Promise<void> => {
+  const ElectronStore = (await import('electron-store')).default
+  store = new ElectronStore<StoreSchema>() as unknown as Store<StoreSchema>
+}
+
+const createWindow = async (): Promise<void> => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -26,12 +57,14 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  await initStore()
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    await mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    await mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -49,15 +82,37 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  // IPC handlers
+  ipcMain.handle('save-settings', (_event, settings: Config) => {
+    store.set('settings', settings)
+  })
 
-  createWindow()
+  ipcMain.handle('get-settings', () => {
+    return store.get('settings')
+  })
+
+  ipcMain.handle('add-folder', async () => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    if (!result.canceled) {
+      const folderPath = result.filePaths[0]
+      await scanFolder(folderPath)
+      return { success: true, message: 'Folder added successfully' }
+    }
+    return { success: false, message: 'Folder selection cancelled' }
+  })
+
+  ipcMain.handle('get-images', () => {
+    return store.get('images')
+  })
+
+  void createWindow()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      void createWindow()
+    }
   })
 })
 
@@ -70,5 +125,31 @@ app.on('window-all-closed', () => {
   }
 })
 
-// In this file you can include the rest of your app"s specific main process
+async function scanFolder(folderPath: string): Promise<void> {
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif']
+  const images: Image[] = []
+
+  async function scanRecursively(dir: string): Promise<void> {
+    const entries = await fs.readdir(dir, { withFileTypes: true })
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await scanRecursively(fullPath)
+      } else if (entry.isFile() && imageExtensions.includes(path.extname(entry.name).toLowerCase())) {
+        images.push({
+          id: fullPath,
+          src: `file://${fullPath}`,
+          caption: 'Image caption placeholder', // This would be replaced with AI-generated caption
+          tags: ['tag1', 'tag2'] // This would be replaced with AI-generated tags
+        })
+      }
+    }
+  }
+
+  await scanRecursively(folderPath)
+  const existingImages = store.get('images')
+  store.set('images', [...existingImages, ...images])
+}
+
+// In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
