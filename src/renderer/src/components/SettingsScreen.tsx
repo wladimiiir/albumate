@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HiSave } from 'react-icons/hi';
-import { Settings } from '../types/electron';
+import { Settings } from '../../../shared/types';
 
 const SettingsScreen: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({
@@ -16,14 +16,14 @@ const SettingsScreen: React.FC = () => {
         setSettings(savedSettings);
       }
     };
-    loadSettings();
+    void loadSettings();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -35,11 +35,13 @@ const SettingsScreen: React.FC = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800">Settings</h2>
-      
+
       <div className="bg-white shadow rounded-lg p-6">
         <div className="space-y-4">
           <div>
-            <label htmlFor="openAIBaseURL" className="block text-sm font-medium text-gray-700">OpenAI Base URL</label>
+            <label htmlFor="openAIBaseURL" className="block text-sm font-medium text-gray-700">
+              OpenAI Base URL
+            </label>
             <input
               type="text"
               id="openAIBaseURL"
@@ -51,7 +53,9 @@ const SettingsScreen: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">API Key</label>
+            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">
+              API Key
+            </label>
             <input
               type="password"
               id="apiKey"
@@ -63,7 +67,9 @@ const SettingsScreen: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="model" className="block text-sm font-medium text-gray-700">Model</label>
+            <label htmlFor="model" className="block text-sm font-medium text-gray-700">
+              Model
+            </label>
             <select
               id="model"
               name="model"

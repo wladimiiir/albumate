@@ -1,33 +1,28 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
-
-interface Settings {
-  openAIBaseURL: string
-  apiKey: string
-  model: string
-}
+import { contextBridge, ipcRenderer } from 'electron';
+import { electronAPI } from '@electron-toolkit/preload';
+import { Config } from '../main/types';
 
 // Custom APIs for renderer
 const api = {
-  saveSettings: (settings: Settings): Promise<void> => ipcRenderer.invoke('save-settings', settings),
-  getSettings: (): Promise<Settings> => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings: Config): Promise<void> => ipcRenderer.invoke('save-settings', settings),
+  getSettings: (): Promise<Config> => ipcRenderer.invoke('get-settings'),
   addFolder: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke('add-folder'),
-  getImages: (): Promise<Array<{ id: string; src: string; caption: string; tags: string[] }>> => ipcRenderer.invoke('get-images')
-}
+  getImages: (): Promise<Array<{ id: string; src: string; caption: string; tags: string[] }>> => ipcRenderer.invoke('get-images'),
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('electron', electronAPI);
+    contextBridge.exposeInMainWorld('api', api);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
   // @ts-ignore (define in dts)
-  window.electron = electronAPI
+  window.electron = electronAPI;
   // @ts-ignore (define in dts)
-  window.api = api
+  window.api = api;
 }
