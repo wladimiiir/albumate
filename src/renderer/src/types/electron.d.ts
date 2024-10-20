@@ -5,6 +5,7 @@ export interface ElectronAPI {
   getSettings: () => Promise<Settings>;
   addFolder: () => Promise<{ success: boolean; message: string }>;
   getImages: () => Promise<Image[]>;
+  generateImageCaption: (image: Image) => Promise<string>;
 }
 
 declare global {

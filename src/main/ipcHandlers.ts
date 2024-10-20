@@ -2,8 +2,9 @@ import { ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import { StoreSchema, Store, Config, Image } from '@shared/types';
+import { AIModel } from './aiModel';
 
-export const setupIpcHandlers = (store: Store<StoreSchema>): void => {
+export const setupIpcHandlers = (store: Store<StoreSchema>, aiModel: AIModel): void => {
   ipcMain.handle('save-settings', (_event, settings: Config) => {
     store.set('settings', settings);
   });
@@ -24,6 +25,10 @@ export const setupIpcHandlers = (store: Store<StoreSchema>): void => {
 
   ipcMain.handle('get-images', () => {
     return store.get('images');
+  });
+
+  ipcMain.handle('generate-image-caption', async (_event, image: Image) => {
+    await aiModel.queueImageCaptionGeneration(image);
   });
 };
 

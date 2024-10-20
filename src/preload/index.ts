@@ -1,13 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
-import { Config } from '../main/types';
+import { Config, Image } from '@shared/types';
 
 // Custom APIs for renderer
 const api = {
   saveSettings: (settings: Config): Promise<void> => ipcRenderer.invoke('save-settings', settings),
   getSettings: (): Promise<Config> => ipcRenderer.invoke('get-settings'),
   addFolder: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke('add-folder'),
-  getImages: (): Promise<Array<{ id: string; src: string; caption: string; tags: string[] }>> => ipcRenderer.invoke('get-images'),
+  getImages: (): Promise<Image[]> => ipcRenderer.invoke('get-images'),
+  generateImageCaption: (image: Image): Promise<string> => ipcRenderer.invoke('generate-image-caption', image),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

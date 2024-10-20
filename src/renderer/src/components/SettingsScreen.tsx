@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HiSave } from 'react-icons/hi';
-import { Settings } from '../../../shared/types';
+import { Settings } from '@shared/types';
 
 const SettingsScreen: React.FC = () => {
   const [settings, setSettings] = useState<Settings>({

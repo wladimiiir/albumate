@@ -4,14 +4,18 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
 import { setupIpcHandlers } from './ipcHandlers';
 import { Store, StoreSchema } from '@shared/types';
+import { AIModel } from './aiModel';
 
-let store: Store<StoreSchema>;
-const initStore = async (): Promise<void> => {
+const initStore = async (): Promise<Store<StoreSchema>> => {
   const ElectronStore = (await import('electron-store')).default;
-  store = new ElectronStore<StoreSchema>() as unknown as Store<StoreSchema>;
+  return new ElectronStore<StoreSchema>() as unknown as Store<StoreSchema>;
 };
 
-const createWindow = async (): Promise<void> => {
+const initAIModel = async (store: Store<StoreSchema>): Promise<AIModel> => {
+  return new AIModel(store);
+};
+
+const createWindow = async (store: Store<StoreSchema>): Promise<void> => {
   // Load the last window settings
   const lastWindowState = store.get('windowState') || { width: 900, height: 670, x: undefined, y: undefined, isMaximized: false };
 
@@ -79,16 +83,18 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  await initStore();
-  setupIpcHandlers(store);
+  const store = await initStore();
+  const aiModel = await initAIModel(store);
 
-  await createWindow();
+  setupIpcHandlers(store, aiModel);
+
+  await createWindow(store);
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) {
-      void createWindow();
+      void createWindow(store);
     }
   });
 });

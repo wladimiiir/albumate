@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { HiFolderAdd, HiSearch, HiArrowLeft, HiArrowRight, HiOutlineRefresh } from 'react-icons/hi';
 import Modal from 'react-modal';
 import { Image } from '@shared/types';
+import ImageDetails from './ImageDetails';
 
 const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -163,21 +164,7 @@ const Home: React.FC = () => {
         ariaHideApp={false}
       >
         <div className="fixed inset-0 bg-black bg-opacity-75" onClick={() => setSelectedImage(null)} />
-        {selectedImage && (
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-3xl mx-auto relative">
-            <img src={selectedImage.src} alt={selectedImage.caption} className="w-full h-auto max-h-[calc(100vh-10rem)]" />
-            <div className="mt-4">
-              <p className="text-md">{selectedImage.caption}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedImage.tags.map((tag, index) => (
-                  <span key={index} className="px-2 py-1 bg-gray-200 text-xs rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {selectedImage && <ImageDetails image={selectedImage} />}
       </Modal>
     </div>
   );
