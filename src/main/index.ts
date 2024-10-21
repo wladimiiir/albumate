@@ -15,7 +15,7 @@ const initAIModel = async (store: Store<StoreSchema>): Promise<AIModel> => {
   return new AIModel(store);
 };
 
-const createWindow = async (store: Store<StoreSchema>): Promise<void> => {
+const createWindow = async (store: Store<StoreSchema>) => {
   // Load the last window settings
   const lastWindowState = store.get('windowState') || { width: 900, height: 670, x: undefined, y: undefined, isMaximized: false };
 
@@ -67,6 +67,8 @@ const createWindow = async (store: Store<StoreSchema>): Promise<void> => {
   } else {
     await mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
+
+  return mainWindow;
 };
 
 // This method will be called when Electron has finished
@@ -84,11 +86,10 @@ app.whenReady().then(async () => {
   });
 
   const store = await initStore();
+  const window = await createWindow(store);
   const aiModel = await initAIModel(store);
 
-  setupIpcHandlers(store, aiModel);
-
-  await createWindow(store);
+  setupIpcHandlers(window.webContents, store, aiModel);
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

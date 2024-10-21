@@ -22,6 +22,16 @@ const Home: React.FC = () => {
     void loadImages();
   }, []);
 
+  useEffect(() => {
+    const onImageUpdated = (_event, image: Image) => {
+      setImages((prevImages) => prevImages.map((prevImage) => (prevImage.id === image.id ? image : prevImage)));
+      if (selectedImage && selectedImage.id === image.id) {
+        setSelectedImage(image);
+      }
+    };
+    window.api.onImageUpdated(onImageUpdated);
+  }, []);
+
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     // The filtering is now done in the filteredImages variable

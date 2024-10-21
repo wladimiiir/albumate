@@ -9,6 +9,9 @@ const api = {
   addFolder: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke('add-folder'),
   getImages: (): Promise<Image[]> => ipcRenderer.invoke('get-images'),
   generateImageCaption: (image: Image): Promise<string> => ipcRenderer.invoke('generate-image-caption', image),
+  onImageUpdated: (callback: (event: Electron.IpcRendererEvent, image: Image) => void): void => {
+    ipcRenderer.on('image-updated', callback);
+  },
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -1,6 +1,12 @@
 import fs from 'fs/promises';
 import { Image, Store, StoreSchema } from '@shared/types';
 import { DEFAULT_TAGS } from './constants';
+import { eventManager } from './eventManager';
+
+type ImageInfo = {
+  caption: string;
+  tags: string[];
+};
 
 export class AIModel {
   private queue: Image[] = [];
@@ -9,6 +15,10 @@ export class AIModel {
   constructor(private store: Store<StoreSchema>) {}
 
   async queueImageCaptionGeneration(image: Image): Promise<void> {
+    const imageIndex = this.queue.findIndex((image) => image.id === image.id);
+    if (imageIndex !== -1) {
+      this.queue.splice(imageIndex, 1);
+    }
     this.queue.unshift(image);
     void this.processQueue();
   }
@@ -23,8 +33,16 @@ export class AIModel {
       const image = this.queue.shift();
       if (image) {
         try {
-          const caption = await this.generateImageCaption(image);
-          console.log(`Generated caption for image ${image.id}: ${caption}`);
+          image.processing = true;
+          eventManager.emit('update-image', image);
+
+          const info = await this.generateImageInfo(image);
+          console.log(`Generated caption for image ${image.id}: ${info.caption}, tags: ${info.tags}`);
+          image.caption = info.caption;
+          image.tags = info.tags;
+          image.processing = false;
+
+          eventManager.emit('update-image', image);
         } catch (error) {
           console.error(`Failed to generate caption for image ${image.id}:`, error);
         }
@@ -34,7 +52,7 @@ export class AIModel {
     this.isProcessing = false;
   }
 
-  async generateImageCaption(image: Image): Promise<string> {
+  async generateImageInfo(image: Image): Promise<ImageInfo> {
     const settings = this.store.get('settings');
 
     if (!settings.openAIBaseURL || !settings.apiKey) {
@@ -76,8 +94,14 @@ export class AIModel {
     });
 
     const data = await response.json();
-    console.log(data.choices[0].message);
-    return data.choices[0].message.content;
+    const content = data.choices[0].message.content;
+    const caption = content.match(/<caption>(.*?)<\/caption>/)?.[1] || 'Unknown';
+    const tags = content.match(/<tags>(.*?)<\/tags>/)?.[1].split(', ') || [];
+
+    return {
+      caption,
+      tags,
+    };
   }
 
   async getBase64Image(image: Image): Promise<string> {
