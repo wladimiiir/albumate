@@ -3,23 +3,21 @@ import { join } from 'path';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
 import { setupIpcHandlers } from './ipcHandlers';
-import { Store, StoreSchema } from '@shared/types';
 import { AIModel } from './aiModel';
+import { Store } from './store';
 
-const initStore = async (): Promise<Store<StoreSchema>> => {
-  const ElectronStore = (await import('electron-store')).default;
-  return new ElectronStore<StoreSchema>() as unknown as Store<StoreSchema>;
+const initStore = async (): Promise<Store> => {
+  const store = new Store();
+  await store.init();
+  return store;
 };
 
-const initAIModel = async (store: Store<StoreSchema>): Promise<AIModel> => {
+const initAIModel = async (store: Store): Promise<AIModel> => {
   return new AIModel(store);
 };
 
-const createWindow = async (store: Store<StoreSchema>) => {
-  // Load the last window settings
-  const lastWindowState = store.get('windowState') || { width: 900, height: 670, x: undefined, y: undefined, isMaximized: false };
-
-  // Create the browser window.
+const createWindow = async (store: Store) => {
+  const lastWindowState = store.getWindowState();
   const mainWindow = new BrowserWindow({
     width: lastWindowState.width,
     height: lastWindowState.height,
@@ -48,11 +46,10 @@ const createWindow = async (store: Store<StoreSchema>) => {
     return { action: 'deny' };
   });
 
-  // Save the window state when the window is resized or moved
   const saveWindowState = (): void => {
     const [width, height] = mainWindow.getSize();
     const [x, y] = mainWindow.getPosition();
-    store.set('windowState', { width, height, x, y, isMaximized: mainWindow.isMaximized() });
+    store.setWindowState({ width, height, x, y, isMaximized: mainWindow.isMaximized() });
   };
 
   mainWindow.on('resize', saveWindowState);
@@ -71,11 +68,14 @@ const createWindow = async (store: Store<StoreSchema>) => {
   return mainWindow;
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+const resumeImageCaptionGeneration = async (store: Store, aiModel: AIModel) => {
+  const images = store.getImages();
+  const imagesToProcess = images.filter((image) => image.processing);
+  console.log(`Resuming ${imagesToProcess.length} images...`);
+  await Promise.all(imagesToProcess.map(async (image) => await aiModel.queueImageCaptionGeneration(image, true)));
+};
+
 app.whenReady().then(async () => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron');
 
   // Default open or close DevTools by F12 in development
@@ -90,6 +90,8 @@ app.whenReady().then(async () => {
   const aiModel = await initAIModel(store);
 
   setupIpcHandlers(window.webContents, store, aiModel);
+
+  resumeImageCaptionGeneration(store, aiModel);
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -108,6 +110,3 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

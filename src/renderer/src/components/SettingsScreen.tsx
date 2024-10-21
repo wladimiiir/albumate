@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useSnackbar } from 'notistack';
 import { HiSave } from 'react-icons/hi';
 import { Settings } from '@shared/types';
 
 const SettingsScreen: React.FC = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [settings, setSettings] = useState<Settings>({
     openAIBaseURL: '',
     apiKey: '',
@@ -29,7 +31,7 @@ const SettingsScreen: React.FC = () => {
 
   const handleSave = async (): Promise<void> => {
     await window.api.saveSettings(settings);
-    alert('Settings saved successfully!');
+    enqueueSnackbar('Settings saved successfully!', { variant: 'success' });
   };
 
   return (

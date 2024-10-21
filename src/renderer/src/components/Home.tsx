@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { HiFolderAdd, HiSearch, HiArrowLeft, HiArrowRight, HiOutlineRefresh } from 'react-icons/hi';
 import Modal from 'react-modal';
 import { Image } from '@shared/types';
 import ImageDetails from './ImageDetails';
+import { useSnackbar } from 'notistack';
 
-const Home: React.FC = () => {
+const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [imagesPerPage, setImagesPerPage] = useState(10);
+  const { enqueueSnackbar } = useSnackbar();
+  const processingImagesCount = useMemo(() => images.filter((image) => image.processing).length, [images]);
 
   useEffect(() => {
     const loadImages = async (): Promise<void> => {
@@ -29,8 +32,12 @@ const Home: React.FC = () => {
         setSelectedImage(image);
       }
     };
-    window.api.onImageUpdated(onImageUpdated);
-  }, []);
+    window.api.addImageUpdatedListener(onImageUpdated);
+
+    return () => {
+      window.api.removeImageUpdatedListener(onImageUpdated);
+    };
+  }, [selectedImage]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
@@ -40,12 +47,11 @@ const Home: React.FC = () => {
   const handleAddFolder = async (): Promise<void> => {
     const result = await window.api.addFolder();
     if (result.success) {
-      alert(result.message);
       // Refresh the images after adding a new folder
       const updatedImages = await window.api.getImages();
       setImages(updatedImages);
-    } else {
-      alert(result.message);
+    } else if (result.message) {
+      enqueueSnackbar(result.message, { variant: 'error' });
     }
   };
 
@@ -65,7 +71,12 @@ const Home: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Your Photos</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-800">Your Photos</h2>
+        <div className="text-sm text-gray-600">
+          {processingImagesCount > 0 ? `Processing ${processingImagesCount} of ${images.length} images...` : `Total of ${images.length} images`}
+        </div>
+      </div>
 
       <div className="flex space-x-4">
         <form onSubmit={handleSearch} className="flex-grow">

@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
-import { Image, Store, StoreSchema } from '@shared/types';
+import { Image } from '@shared/types';
 import { DEFAULT_TAGS } from './constants';
 import { eventManager } from './eventManager';
+import { Store } from './store';
 
 type ImageInfo = {
   caption: string;
@@ -11,14 +12,17 @@ type ImageInfo = {
 export class AIModel {
   private queue: Image[] = [];
   private isProcessing = false;
+  private totalCost = 0;
 
-  constructor(private store: Store<StoreSchema>) {}
+  constructor(private store: Store) {}
 
-  async queueImageCaptionGeneration(image: Image): Promise<void> {
-    const imageIndex = this.queue.findIndex((image) => image.id === image.id);
-    if (imageIndex !== -1) {
-      this.queue.splice(imageIndex, 1);
+  async queueImageCaptionGeneration(image: Image, silent = false): Promise<void> {
+    image.processing = true;
+    if (!silent) {
+      eventManager.emit('update-image', image);
     }
+
+    this.queue = this.queue.filter((img) => img.id !== image.id);
     this.queue.unshift(image);
     void this.processQueue();
   }
@@ -33,11 +37,9 @@ export class AIModel {
       const image = this.queue.shift();
       if (image) {
         try {
-          image.processing = true;
-          eventManager.emit('update-image', image);
-
+          console.log(`Generating caption for image ${image.id}`);
           const info = await this.generateImageInfo(image);
-          console.log(`Generated caption for image ${image.id}: ${info.caption}, tags: ${info.tags}`);
+          console.log(`Generated caption for image ${image.id}: ${info.caption}, tags: ${info.tags}, total cost: $${this.totalCost.toFixed(4)}`);
           image.caption = info.caption;
           image.tags = info.tags;
           image.processing = false;
@@ -53,7 +55,7 @@ export class AIModel {
   }
 
   async generateImageInfo(image: Image): Promise<ImageInfo> {
-    const settings = this.store.get('settings');
+    const settings = this.store.getSettings();
 
     if (!settings.openAIBaseURL || !settings.apiKey) {
       throw new Error('Model API settings not found');
@@ -67,7 +69,7 @@ export class AIModel {
         Authorization: `Bearer ${settings.apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -90,6 +92,7 @@ export class AIModel {
             ],
           },
         ],
+        stream: false,
       }),
     });
 
@@ -98,10 +101,19 @@ export class AIModel {
     const caption = content.match(/<caption>(.*?)<\/caption>/)?.[1] || 'Unknown';
     const tags = content.match(/<tags>(.*?)<\/tags>/)?.[1].split(', ') || [];
 
+    this.updateTotalCost(data.usage.prompt_tokens, data.usage.completion_tokens);
+
     return {
       caption,
       tags,
     };
+  }
+
+  private updateTotalCost(promptTokens: number, completionTokens: number): void {
+    const costPer1000InputTokens = 0.0025;
+    const costPer1000OutputTokens = 0.01;
+
+    this.totalCost += (promptTokens * costPer1000InputTokens + completionTokens * costPer1000OutputTokens) / 1000;
   }
 
   async getBase64Image(image: Image): Promise<string> {
