@@ -6,8 +6,9 @@ export interface ElectronAPI {
   addFolder: () => Promise<{ success: boolean; message?: string }>;
   getImages: () => Promise<Image[]>;
   generateImageCaption: (image: Image) => Promise<string>;
-  addImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void) => void;
-  removeImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void) => void;
+  addImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void) => string;
+  removeImageUpdatedListener: (listenerId: string) => void;
+  getModels: (settings: Settings) => Promise<string[]>;
 }
 
 declare global {

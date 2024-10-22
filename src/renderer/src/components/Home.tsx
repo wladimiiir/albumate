@@ -1,19 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { HiFolderAdd, HiSearch, HiArrowLeft, HiArrowRight, HiOutlineRefresh } from 'react-icons/hi';
+import { HiFolderAdd, HiOutlineRefresh, HiSearch } from 'react-icons/hi';
 import Modal from 'react-modal';
 import { Image } from '@shared/types';
 import ImageDetails from './ImageDetails';
 import { useSnackbar } from 'notistack';
+import Pager from './Pager';
 
 const Home = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [imagesPerPage, setImagesPerPage] = useState(10);
-  const { enqueueSnackbar } = useSnackbar();
-  const processingImagesCount = useMemo(() => images.filter((image) => image.processing).length, [images]);
+  const imagesToProcess = useMemo(() => images.filter((image) => image.processing).length, [images]);
 
   useEffect(() => {
     const loadImages = async (): Promise<void> => {
@@ -32,10 +33,10 @@ const Home = () => {
         setSelectedImage(image);
       }
     };
-    window.api.addImageUpdatedListener(onImageUpdated);
 
+    const listenerId = window.api.addImageUpdatedListener(onImageUpdated);
     return () => {
-      window.api.removeImageUpdatedListener(onImageUpdated);
+      window.api.removeImageUpdatedListener(listenerId);
     };
   }, [selectedImage]);
 
@@ -72,10 +73,8 @@ const Home = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Your Photos</h2>
-        <div className="text-sm text-gray-600">
-          {processingImagesCount > 0 ? `Processing ${processingImagesCount} of ${images.length} images...` : `Total of ${images.length} images`}
-        </div>
+        <h2 className="text-2xl font-bold text-gray-800">Your Photos ({images.length})</h2>
+        {imagesToProcess > 0 && <div className="text-sm text-gray-600">{`Remaining ${imagesToProcess} images to process...`}</div>}
       </div>
 
       <div className="flex space-x-4">
@@ -100,42 +99,13 @@ const Home = () => {
         </button>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex items-center space-x-4">
-          <select
-            value={imagesPerPage}
-            onChange={(e) => {
-              setImagesPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {Math.ceil(filteredImages.length / imagesPerPage)}
-          </span>
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            <HiArrowLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={indexOfLastImage >= filteredImages.length}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            <HiArrowRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
+      <Pager
+        currentPage={currentPage}
+        totalPages={Math.ceil(filteredImages.length / imagesPerPage)}
+        itemsPerPage={imagesPerPage}
+        onItemsPerPageChange={setImagesPerPage}
+        onPageChange={setCurrentPage}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {currentImages.map((image) => (
@@ -174,6 +144,14 @@ const Home = () => {
       ) : filteredImages.length === 0 ? (
         <p className="text-center text-gray-500">No images found. Try adding a folder or adjusting your search.</p>
       ) : null}
+
+      <Pager
+        currentPage={currentPage}
+        totalPages={Math.ceil(filteredImages.length / imagesPerPage)}
+        itemsPerPage={imagesPerPage}
+        onItemsPerPageChange={setImagesPerPage}
+        onPageChange={setCurrentPage}
+      />
 
       <Modal
         isOpen={selectedImage !== null}

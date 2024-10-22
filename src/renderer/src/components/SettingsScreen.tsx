@@ -1,15 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 import { HiSave } from 'react-icons/hi';
-import { Settings } from '@shared/types';
+import { Settings, ModelProviderName, OpenAIProviderConfig, OllamaProviderConfig } from '@shared/types';
+
+const DEFAULT_MODEL_PROVIDER_CONFIGS = {
+  [ModelProviderName.OpenAI]: {
+    name: ModelProviderName.OpenAI,
+    openAIBaseURL: 'https://api.openai.com/v1',
+    openAIApiKey: '',
+    model: 'gpt-4o',
+  } as OpenAIProviderConfig,
+  [ModelProviderName.Ollama]: {
+    name: ModelProviderName.Ollama,
+    ollamaBaseURL: 'http://localhost:11434',
+    model: '',
+  } as OllamaProviderConfig,
+};
 
 const SettingsScreen: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [settings, setSettings] = useState<Settings>({
-    openAIBaseURL: '',
-    apiKey: '',
-    model: 'gpt-3.5-turbo',
+    modelProviderConfig: DEFAULT_MODEL_PROVIDER_CONFIGS[ModelProviderName.OpenAI],
   });
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+
+  const loadModels = async (): Promise<void> => {
+    try {
+      const models = await window.api.getModels(settings);
+      setAvailableModels(models);
+      console.log(settings.modelProviderConfig);
+      if (models.length > 0 && !settings.modelProviderConfig.model) {
+        setSettings((prev) => ({ ...prev, modelProviderConfig: { ...prev.modelProviderConfig, model: models[0] } }));
+      }
+    } catch (error) {
+      console.error('Failed to load models:', error);
+      enqueueSnackbar('Failed to load models', { variant: 'error' });
+    }
+  };
 
   useEffect(() => {
     const loadSettings = async (): Promise<void> => {
@@ -21,12 +48,26 @@ const SettingsScreen: React.FC = () => {
     void loadSettings();
   }, []);
 
+  useEffect(() => {
+    void loadModels();
+  }, [settings.modelProviderConfig.name]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setSettings((prev) => ({
       ...prev,
-      [name]: value,
+      modelProviderConfig: {
+        ...prev.modelProviderConfig,
+        [name]: value,
+      },
     }));
+
+    if (name === 'name') {
+      const providerName = value as ModelProviderName;
+      setSettings(() => ({
+        modelProviderConfig: DEFAULT_MODEL_PROVIDER_CONFIGS[providerName],
+      }));
+    }
   };
 
   const handleSave = async (): Promise<void> => {
@@ -41,32 +82,69 @@ const SettingsScreen: React.FC = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="space-y-4">
           <div>
-            <label htmlFor="openAIBaseURL" className="block text-sm font-medium text-gray-700">
-              OpenAI Base URL
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Model Provider
             </label>
-            <input
-              type="text"
-              id="openAIBaseURL"
-              name="openAIBaseURL"
-              value={settings.openAIBaseURL}
+            <select
+              id="name"
+              name="name"
+              value={settings.modelProviderConfig.name}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            >
+              <option value={ModelProviderName.OpenAI}>OpenAI</option>
+              <option value={ModelProviderName.Ollama}>Ollama</option>
+            </select>
           </div>
 
-          <div>
-            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">
-              API Key
-            </label>
-            <input
-              type="password"
-              id="apiKey"
-              name="apiKey"
-              value={settings.apiKey}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
+          {settings.modelProviderConfig.name === ModelProviderName.OpenAI && (
+            <>
+              <div>
+                <label htmlFor="openAIBaseURL" className="block text-sm font-medium text-gray-700">
+                  OpenAI Base URL
+                </label>
+                <input
+                  type="text"
+                  id="openAIBaseURL"
+                  name="openAIBaseURL"
+                  value={(settings.modelProviderConfig as OpenAIProviderConfig).openAIBaseURL}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="openAIApiKey" className="block text-sm font-medium text-gray-700">
+                  OpenAI API Key
+                </label>
+                <input
+                  type="password"
+                  id="openAIApiKey"
+                  name="openAIApiKey"
+                  value={(settings.modelProviderConfig as OpenAIProviderConfig).openAIApiKey}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </>
+          )}
+
+          {settings.modelProviderConfig.name === ModelProviderName.Ollama && (
+            <div>
+              <label htmlFor="ollamaBaseURL" className="block text-sm font-medium text-gray-700">
+                Ollama Base URL
+              </label>
+              <input
+                type="text"
+                id="ollamaBaseURL"
+                name="ollamaBaseURL"
+                value={(settings.modelProviderConfig as OllamaProviderConfig).ollamaBaseURL}
+                onChange={handleChange}
+                onBlur={() => void loadModels()}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          )}
 
           <div>
             <label htmlFor="model" className="block text-sm font-medium text-gray-700">
@@ -75,12 +153,15 @@ const SettingsScreen: React.FC = () => {
             <select
               id="model"
               name="model"
-              value={settings.model}
+              value={settings.modelProviderConfig.model}
               onChange={handleChange}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             >
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-              <option value="gpt-4">GPT-4</option>
+              {availableModels.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
             </select>
           </div>
         </div>

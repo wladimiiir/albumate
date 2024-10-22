@@ -1,13 +1,13 @@
-import { dialog } from 'electron';
+import { dialog, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
-import { ipcMain } from 'electron';
 import { Image, Settings } from '@shared/types';
-import { AIModel } from './aiModel';
+import { ModelManager } from './modelManager';
 import { eventManager } from './eventManager';
 import { Store } from './store';
+import { MODEL_PROVIDERS } from './models/modelProvider';
 
-const scanFolder = async (store: Store, folderPath: string, aiModel: AIModel) => {
+const scanFolder = async (store: Store, folderPath: string, modelManager: ModelManager) => {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
   const images: Image[] = store.getImages() || [];
 
@@ -33,7 +33,7 @@ const scanFolder = async (store: Store, folderPath: string, aiModel: AIModel) =>
           images.push(image);
         }
 
-        await aiModel.queueImageCaptionGeneration(image);
+        await modelManager.queueImageCaptionGeneration(image);
       }
     }
   };
@@ -42,7 +42,7 @@ const scanFolder = async (store: Store, folderPath: string, aiModel: AIModel) =>
   store.setImages(images);
 };
 
-export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store, aiModel: AIModel) => {
+export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store, modelManager: ModelManager) => {
   ipcMain.handle('save-settings', (_event, settings: Settings) => {
     store.setSettings(settings);
   });
@@ -53,14 +53,15 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
 
   ipcMain.handle('add-folder', async () => {
     const settings = store.getSettings();
-    if (settings.openAIBaseURL === '' || settings.apiKey === '') {
-      return { success: false, message: 'OpenAI API settings not found. Go to Settings and enter your API key and base URL.' };
+
+    if (!MODEL_PROVIDERS[settings.modelProviderConfig.name].isInitialized(settings)) {
+      return { success: false, message: 'Model provider not initialized. Go to Settings and enter your the information for the model provider.' };
     }
 
     const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
     if (!result.canceled) {
       const folderPath = result.filePaths[0];
-      await scanFolder(store, folderPath, aiModel);
+      await scanFolder(store, folderPath, modelManager);
       return { success: true, message: 'Folder added successfully' };
     }
     return { success: false };
@@ -71,7 +72,7 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
   });
 
   ipcMain.handle('generate-image-caption', async (_event, image: Image) => {
-    await aiModel.queueImageCaptionGeneration(image);
+    await modelManager.queueImageCaptionGeneration(image);
   });
 
   eventManager.on('update-image', async (image: Image) => {
@@ -82,5 +83,13 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
       store.setImages(images);
       webContents.send('image-updated', image);
     }
+  });
+
+  ipcMain.handle('get-models', async (_event, settings: Settings) => {
+    const provider = MODEL_PROVIDERS[settings.modelProviderConfig.name];
+    if (provider) {
+      return await provider.getModels(settings);
+    }
+    throw new Error('Model provider not initialized or not found');
   });
 };

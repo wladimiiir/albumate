@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { v4 as uuidv4 } from 'uuid';
 import { electronAPI } from '@electron-toolkit/preload';
-import { Settings, Image } from '@shared/types';
+import { Image, Settings } from '@shared/types';
+
+const imageUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, image: Image) => void> = {};
 
 // Custom APIs for renderer
 const api = {
@@ -9,12 +12,20 @@ const api = {
   addFolder: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke('add-folder'),
   getImages: (): Promise<Image[]> => ipcRenderer.invoke('get-images'),
   generateImageCaption: (image: Image): Promise<string> => ipcRenderer.invoke('generate-image-caption', image),
-  addImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void): void => {
+  addImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void): string => {
+    const listenerId = uuidv4();
+    imageUpdatedListeners[listenerId] = callback;
+
     ipcRenderer.on('image-updated', callback);
+    return listenerId;
   },
-  removeImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void): void => {
-    ipcRenderer.off('image-updated', callback);
+  removeImageUpdatedListener: (listenerId: number): void => {
+    const callback = imageUpdatedListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('image-updated', callback);
+    }
   },
+  getModels: (settings: Settings): Promise<string[]> => ipcRenderer.invoke('get-models', settings),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

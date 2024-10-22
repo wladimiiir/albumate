@@ -3,7 +3,7 @@ import { join } from 'path';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
 import { setupIpcHandlers } from './ipcHandlers';
-import { AIModel } from './aiModel';
+import { ModelManager } from './modelManager';
 import { Store } from './store';
 
 const initStore = async (): Promise<Store> => {
@@ -12,8 +12,8 @@ const initStore = async (): Promise<Store> => {
   return store;
 };
 
-const initAIModel = async (store: Store): Promise<AIModel> => {
-  return new AIModel(store);
+const initModelManager = async (store: Store): Promise<ModelManager> => {
+  return new ModelManager(store);
 };
 
 const createWindow = async (store: Store) => {
@@ -68,11 +68,11 @@ const createWindow = async (store: Store) => {
   return mainWindow;
 };
 
-const resumeImageCaptionGeneration = async (store: Store, aiModel: AIModel) => {
+const resumeImageCaptionGeneration = async (store: Store, modelManager: ModelManager) => {
   const images = store.getImages();
   const imagesToProcess = images.filter((image) => image.processing);
   console.log(`Resuming ${imagesToProcess.length} images...`);
-  await Promise.all(imagesToProcess.map(async (image) => await aiModel.queueImageCaptionGeneration(image, true)));
+  await Promise.all(imagesToProcess.map(async (image) => await modelManager.queueImageCaptionGeneration(image, true)));
 };
 
 app.whenReady().then(async () => {
@@ -87,11 +87,11 @@ app.whenReady().then(async () => {
 
   const store = await initStore();
   const window = await createWindow(store);
-  const aiModel = await initAIModel(store);
+  const modelManager = await initModelManager(store);
 
-  setupIpcHandlers(window.webContents, store, aiModel);
+  setupIpcHandlers(window.webContents, store, modelManager);
 
-  resumeImageCaptionGeneration(store, aiModel);
+  await resumeImageCaptionGeneration(store, modelManager);
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

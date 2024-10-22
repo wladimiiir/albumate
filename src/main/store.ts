@@ -1,4 +1,4 @@
-import { Settings, Image, WindowState } from '@shared/types';
+import { Settings, Image, WindowState, ModelProviderName, OpenAIProviderConfig } from '@shared/types';
 
 interface StoreSchema {
   windowState: WindowState;
@@ -39,9 +39,12 @@ export class Store {
 
   private getDefaultSettings(): Settings {
     return {
-      openAIBaseURL: 'https://api.openai.com/v1',
-      apiKey: '',
-      model: 'gpt-4-turbo',
+      modelProviderConfig: {
+        name: ModelProviderName.OpenAI,
+        openAIBaseURL: 'https://api.openai.com/v1',
+        openAIApiKey: '',
+        model: 'gpt-4o',
+      } as OpenAIProviderConfig,
     };
   }
 
