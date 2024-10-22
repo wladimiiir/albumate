@@ -27,5 +27,6 @@ export default defineConfig({
       },
     },
     plugins: [react()],
+    assetsInclude: ['**/*.png'],
   },
 });

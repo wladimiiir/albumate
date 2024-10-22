@@ -48,7 +48,6 @@ export class OllamaModelProvider implements ModelProvider {
 
     const data = await response.json();
     const content = data.message.content;
-    console.log(content);
     const caption = content.match(/<caption>(.*?)<\/caption>/)?.[1] || 'Unknown';
     const tags =
       content

@@ -1,21 +1,25 @@
-import { Link, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { HiCog, HiHome } from 'react-icons/hi';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Home from './components/Home';
 import SettingsScreen from './components/SettingsScreen';
 import Modal from 'react-modal';
+import icon from './assets/icon.png';
 
-const App: React.FC = () => {
+const App = () => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     Modal.setAppElement('#app');
+    navigate('/');
   }, []);
 
   return (
     <div id="app" className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="md:block md:w-64 bg-white shadow-lg">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-800">Albumate</h1>
+        <div className="p-6 flex items-center">
+          <img src={icon} alt="icon" className="w-8 h-8 mr-3" />
+          <h1 className="text-2xl font-bold text-gray-800 uppercase">Albumate</h1>
         </div>
         <nav className="mt-6">
           <Link to="/" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-200">
@@ -29,13 +33,12 @@ const App: React.FC = () => {
         </nav>
       </div>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Main content area */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Navigate to="/home" />} />
+              <Route path="/home" element={<Home />} />
               <Route path="/settings" element={<SettingsScreen />} />
             </Routes>
           </div>

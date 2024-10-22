@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: me.wladimiiir.albumate
 productName: albumate
 directories:
   buildResources: build
@@ -25,16 +25,13 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  webSecurity: false
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
   target:
     - AppImage
-    - snap
-    - deb
-  maintainer: electronjs.org
+  maintainer: wladimiiir
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

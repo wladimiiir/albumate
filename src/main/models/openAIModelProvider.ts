@@ -50,7 +50,6 @@ export class OpenAIModelProvider implements ModelProvider {
     });
 
     const data = await response.json();
-    console.log(data);
     const content = data.choices[0].message.content;
     const caption = content.match(/<caption>(.*?)<\/caption>/)?.[1] || 'Unknown';
     const tags = content.match(/<tags>(.*?)<\/tags>/)?.[1].split(', ') || [];
