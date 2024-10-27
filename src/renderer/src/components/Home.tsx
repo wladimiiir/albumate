@@ -5,6 +5,7 @@ import { Image } from '@shared/types';
 import ImageDetails from './ImageDetails';
 import { useSnackbar } from 'notistack';
 import Pager from './Pager';
+import AddFolderModal from './AddFolderModal';
 
 const Home = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -45,10 +46,12 @@ const Home = () => {
     // The filtering is now done in the filteredImages variable
   };
 
-  const handleAddFolder = async (): Promise<void> => {
-    const result = await window.api.addFolder();
+  const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
+
+  const handleAddFolder = async (folderPath: string, includeSubdirectories: boolean): Promise<void> => {
+    const result = await window.api.addFolder(folderPath, includeSubdirectories);
     if (result.success) {
-      // Refresh the images after adding a new folder
+      setIsAddFolderModalOpen(false);
       const updatedImages = await window.api.getImages();
       setImages(updatedImages);
     } else if (result.message) {
@@ -91,7 +94,7 @@ const Home = () => {
           </div>
         </form>
         <button
-          onClick={handleAddFolder}
+          onClick={() => setIsAddFolderModalOpen(true)}
           className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           <HiFolderAdd className="mr-2 h-5 w-5" />
@@ -165,6 +168,8 @@ const Home = () => {
         <div className="fixed inset-0 bg-black bg-opacity-75" onClick={() => setSelectedImage(null)} />
         {selectedImage && <ImageDetails image={selectedImage} />}
       </Modal>
+
+      <AddFolderModal isOpen={isAddFolderModalOpen} onRequestClose={() => setIsAddFolderModalOpen(false)} onSubmit={handleAddFolder} />
     </div>
   );
 };

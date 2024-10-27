@@ -11,7 +11,7 @@ const App = () => {
 
   useEffect(() => {
     Modal.setAppElement('#app');
-    navigate('/');
+    navigate('/home');
   }, []);
 
   return (

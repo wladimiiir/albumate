@@ -9,7 +9,9 @@ const imageUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, i
 const api = {
   saveSettings: (settings: Settings): Promise<void> => ipcRenderer.invoke('save-settings', settings),
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('get-settings'),
-  addFolder: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke('add-folder'),
+  selectFolder: (): Promise<{ success: boolean; path?: string }> => ipcRenderer.invoke('select-folder'),
+  addFolder: (folderPath: string, includeSubdirs: boolean): Promise<{ success: boolean; message?: string }> => 
+    ipcRenderer.invoke('add-folder', folderPath, includeSubdirs),
   getImages: (): Promise<Image[]> => ipcRenderer.invoke('get-images'),
   generateImageCaption: (image: Image): Promise<string> => ipcRenderer.invoke('generate-image-caption', image),
   addImageUpdatedListener: (callback: (event: Electron.IpcRendererEvent, image: Image) => void): string => {

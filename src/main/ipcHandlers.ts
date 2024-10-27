@@ -7,7 +7,7 @@ import { eventManager } from './eventManager';
 import { Store } from './store';
 import { MODEL_PROVIDERS } from './models/modelProvider';
 
-const scanFolder = async (store: Store, folderPath: string, modelManager: ModelManager) => {
+const scanFolder = async (store: Store, folderPath: string, includeSubdirectories: boolean, modelManager: ModelManager) => {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
   const images: Image[] = store.getImages() || [];
 
@@ -16,7 +16,7 @@ const scanFolder = async (store: Store, folderPath: string, modelManager: ModelM
     for (const entry of entries) {
       const imagePath = path.join(dir, entry.name);
 
-      if (entry.isDirectory()) {
+      if (entry.isDirectory() && includeSubdirectories) {
         await scanRecursively(imagePath);
       } else if (entry.isFile() && imageExtensions.includes(path.extname(entry.name).toLowerCase())) {
         let image = images.find((image) => image.id === imagePath);
@@ -51,7 +51,7 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
     return store.getSettings();
   });
 
-  ipcMain.handle('add-folder', async () => {
+  ipcMain.handle('select-folder', async () => {
     const settings = store.getSettings();
 
     if (!MODEL_PROVIDERS[settings.modelProviderConfig.name].isInitialized(settings)) {
@@ -61,10 +61,20 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
     const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
     if (!result.canceled) {
       const folderPath = result.filePaths[0];
-      await scanFolder(store, folderPath, modelManager);
-      return { success: true, message: 'Folder added successfully' };
+      return { success: true, path: folderPath };
     }
     return { success: false };
+  });
+
+  ipcMain.handle('add-folder', async (_event, folderPath: string, includeSubdirectories: boolean) => {
+    const settings = store.getSettings();
+
+    if (!MODEL_PROVIDERS[settings.modelProviderConfig.name].isInitialized(settings)) {
+      return { success: false, message: 'Model provider not initialized. Go to Settings and enter your the information for the model provider.' };
+    }
+
+    await scanFolder(store, folderPath, includeSubdirectories, modelManager);
+    return { success: true, message: 'Folder added successfully' };
   });
 
   ipcMain.handle('get-images', () => {
