@@ -1,0 +1,35 @@
+.rct-tree-item-title-container {
+  @apply flex items-center gap-1;
+}
+
+.rct-tree-item-button {
+  @apply flex items-center py-0.5 px-1 w-full hover:bg-gray-100 transition-colors duration-200 rounded gap-1;
+}
+
+.rct-tree-item-title {
+  @apply text-sm text-gray-700;
+}
+
+.rct-tree-item-arrow {
+  @apply text-gray-400 transition-transform duration-200 text-xs inline-flex items-center justify-center flex-shrink-0;
+  transform-origin: center;
+  min-width: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.rct-tree-item-arrow-expanded {
+  @apply transform rotate-90;
+}
+
+.rct-tree-item-li {
+  @apply list-none;
+}
+
+.rct-tree-items-container {
+  @apply pl-3;
+}
+
+.rct-tree-root {
+  @apply p-0;
+}

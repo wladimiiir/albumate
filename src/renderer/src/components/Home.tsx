@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { HiFolderAdd, HiOutlineRefresh, HiSearch } from 'react-icons/hi';
+import { HiFolderAdd, HiOutlineRefresh, HiSearch, HiCog } from 'react-icons/hi';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { useNavigate } from 'react-router-dom';
 import Modal from 'react-modal';
 import { Image } from '@shared/types';
 import ImageDetails from './ImageDetails';
@@ -8,6 +10,7 @@ import Pager from './Pager';
 import AddFolderModal from './AddFolderModal';
 
 const Home = () => {
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState<Image[]>([]);
@@ -100,6 +103,24 @@ const Home = () => {
           <HiFolderAdd className="mr-2 h-5 w-5" />
           Add Folder
         </button>
+        <Tooltip.Provider>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <button
+                onClick={() => navigate('/folder-settings')}
+                className="p-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <HiCog className="h-5 w-5" />
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content className="bg-gray-900 text-white px-2 py-1 rounded text-sm" sideOffset={5}>
+                Folder Settings
+                <Tooltip.Arrow className="fill-gray-900" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
       </div>
 
       <Pager

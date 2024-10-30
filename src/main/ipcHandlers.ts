@@ -102,4 +102,11 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
     }
     throw new Error('Model provider not initialized or not found');
   });
+
+  ipcMain.handle('remove-images-in-folder', async (_event, folderPath: string) => {
+    const images = store.getImages();
+    const updatedImages = images.filter((image) => !image.id.startsWith(folderPath));
+    store.setImages(updatedImages);
+    return updatedImages;
+  });
 };

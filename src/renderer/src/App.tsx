@@ -1,8 +1,9 @@
-import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { HiCog, HiHome } from 'react-icons/hi';
 import { useEffect } from 'react';
 import Home from './components/Home';
 import SettingsScreen from './components/SettingsScreen';
+import FolderSettings from './components/FolderSettings';
 import Modal from 'react-modal';
 import icon from './assets/icon.png';
 
@@ -11,7 +12,7 @@ const App = () => {
 
   useEffect(() => {
     Modal.setAppElement('#app');
-    navigate('/home');
+    navigate('/home', { replace: true });
   }, []);
 
   return (
@@ -22,7 +23,7 @@ const App = () => {
           <h1 className="text-2xl font-bold text-gray-800 uppercase">Albumate</h1>
         </div>
         <nav className="mt-6">
-          <Link to="/" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-200">
+          <Link to="/home" className="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-200">
             <HiHome className="w-5 h-5 mr-3" />
             Home
           </Link>
@@ -37,9 +38,10 @@ const App = () => {
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
-              <Route path="/" element={<Navigate to="/home" />} />
+              <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
               <Route path="/settings" element={<SettingsScreen />} />
+              <Route path="/folder-settings" element={<FolderSettings />} />
             </Routes>
           </div>
         </main>
