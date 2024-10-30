@@ -80,4 +80,9 @@ export class ModelManager {
 
     return modelProvider.generateImageInfo(settings, image);
   }
+
+  removeQueuedImages(imagesToRemove: Image[]): void {
+    const imageIds = new Set(imagesToRemove.map((img) => img.id));
+    this.queue = this.queue.filter((item) => !imageIds.has(item.image.id));
+  }
 }

@@ -105,8 +105,10 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
 
   ipcMain.handle('remove-images-in-folder', async (_event, folderPath: string) => {
     const images = store.getImages();
+    const imagesToRemove = images.filter((image) => image.id.startsWith(folderPath));
     const updatedImages = images.filter((image) => !image.id.startsWith(folderPath));
     store.setImages(updatedImages);
+    modelManager.removeQueuedImages(imagesToRemove);
     return updatedImages;
   });
 };
