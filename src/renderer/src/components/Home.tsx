@@ -46,7 +46,6 @@ const Home = () => {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    // The filtering is now done in the filteredImages variable
   };
 
   const [isAddFolderModalOpen, setIsAddFolderModalOpen] = useState(false);
@@ -62,15 +61,10 @@ const Home = () => {
     }
   };
 
-  const filteredImages = images
-    .filter(
-      (image) =>
-        image.caption.toLowerCase().includes(searchQuery.toLowerCase()) || image.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
-    )
-    .map((image) => ({
-      ...image,
-      src: image.src.startsWith('file://') || image.src.startsWith('http://') || image.src.startsWith('https://') ? image.src : `file://${image.src}`,
-    }));
+  const filteredImages = images.filter(
+    (image) =>
+      image.caption.toLowerCase().includes(searchQuery.toLowerCase()) || image.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
+  );
 
   const indexOfLastImage = currentPage * imagesPerPage;
   const indexOfFirstImage = indexOfLastImage - imagesPerPage;
@@ -88,27 +82,27 @@ const Home = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search your photos..."
+              placeholder="Search your photos by caption or tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <HiSearch className="absolute left-3 top-2.5 text-gray-400" />
           </div>
         </form>
         <button
           onClick={() => setIsAddFolderModalOpen(true)}
-          className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
         >
           <HiFolderAdd className="mr-2 h-5 w-5" />
-          Add Folder
+          Add folder
         </button>
         <Tooltip.Provider>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button
                 onClick={() => navigate('/folder-settings')}
-                className="p-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="p-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
               >
                 <HiCog className="h-5 w-5" />
               </button>
@@ -135,7 +129,7 @@ const Home = () => {
         {currentImages.map((image) => (
           <div key={image.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             <img
-              src={image.src}
+              src={`file://${image.path}`}
               alt={image.caption}
               className="w-full h-48 object-cover transition-transform duration-300 ease-in-out hover:scale-110 cursor-pointer"
               onClick={() => setSelectedImage(image)}

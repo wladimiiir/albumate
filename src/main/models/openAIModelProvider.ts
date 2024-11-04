@@ -66,7 +66,7 @@ export class OpenAIModelProvider implements ModelProvider {
     return !!config.openAIBaseURL && !!config.openAIApiKey && !!config.model;
   }
 
-  async getModels(_settings: Settings): Promise<string[]> {
+  async getModels(): Promise<string[]> {
     return ['gpt-4o', 'gpt-4-turbo'];
   }
 
@@ -75,8 +75,8 @@ export class OpenAIModelProvider implements ModelProvider {
   }
 
   private async getBase64Image(image: Image): Promise<string> {
-    const imageBuffer = await fs.readFile(image.src.replace('file://', ''));
-    return `data:image/${image.src.split('.').pop()};base64,${imageBuffer.toString('base64')}`;
+    const imageBuffer = await fs.readFile(image.path);
+    return `data:image/${image.path.split('.').pop()};base64,${imageBuffer.toString('base64')}`;
   }
 
   private getPromptCost(model: string, promptTokens: number, completionTokens: number) {

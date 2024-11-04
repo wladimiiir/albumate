@@ -1,4 +1,5 @@
-import { dialog, ipcMain } from 'electron';
+import { v4 as uuidv4 } from 'uuid';
+import { dialog, ipcMain, shell } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import { Image, Settings } from '@shared/types';
@@ -19,13 +20,13 @@ const scanFolder = async (store: Store, folderPath: string, includeSubdirectorie
       if (entry.isDirectory() && includeSubdirectories) {
         await scanRecursively(imagePath);
       } else if (entry.isFile() && imageExtensions.includes(path.extname(entry.name).toLowerCase())) {
-        let image = images.find((image) => image.id === imagePath);
+        let image = images.find((image) => image.path === imagePath);
         if (image) {
           image.processing = true;
         } else {
           image = {
-            id: imagePath,
-            src: `file://${imagePath}`,
+            id: uuidv4(),
+            path: imagePath,
             caption: '',
             tags: [],
             processing: true,
@@ -105,10 +106,14 @@ export const setupIpcHandlers = (webContents: Electron.WebContents, store: Store
 
   ipcMain.handle('remove-images-in-folder', async (_event, folderPath: string) => {
     const images = store.getImages();
-    const imagesToRemove = images.filter((image) => image.id.startsWith(folderPath));
-    const updatedImages = images.filter((image) => !image.id.startsWith(folderPath));
+    const imagesToRemove = images.filter((image) => image.path.startsWith(folderPath));
+    const updatedImages = images.filter((image) => !image.path.startsWith(folderPath));
     store.setImages(updatedImages);
     modelManager.removeQueuedImages(imagesToRemove);
     return updatedImages;
+  });
+
+  ipcMain.handle('open-file', async (_event, filePath: string) => {
+    shell.showItemInFolder(filePath);
   });
 };

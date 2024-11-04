@@ -38,7 +38,7 @@ export interface WindowState {
 
 export interface Image {
   id: string;
-  src: string;
+  path: string;
   caption: string;
   tags: string[];
   processing: boolean;

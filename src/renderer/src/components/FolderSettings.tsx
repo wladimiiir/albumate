@@ -48,7 +48,7 @@ const FolderSettings = () => {
 
     // Process each image path to build the tree structure
     images.forEach((image) => {
-      const imagePath = image.id;
+      const imagePath = image.path;
       // Handle Windows drive letters and root paths
       const parts = imagePath.split(path.sep);
       const dirParts = parts.slice(0, -1); // Skip the last part (filename)

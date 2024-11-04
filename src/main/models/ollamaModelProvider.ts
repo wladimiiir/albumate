@@ -43,7 +43,7 @@ export class OllamaModelProvider implements ModelProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to generate caption for image ${image.id}: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to generate caption for image ${image.path}: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -85,7 +85,7 @@ export class OllamaModelProvider implements ModelProvider {
   }
 
   private async getBase64Image(image: Image): Promise<string> {
-    const imageBuffer = await fs.readFile(image.src.replace('file://', ''));
+    const imageBuffer = await fs.readFile(image.path);
     return imageBuffer.toString('base64');
   }
 

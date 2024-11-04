@@ -29,6 +29,7 @@ const api = {
   },
   getModels: (settings: Settings): Promise<string[]> => ipcRenderer.invoke('get-models', settings),
   removeImagesInFolder: (folderPath: string): Promise<Image[]> => ipcRenderer.invoke('remove-images-in-folder', folderPath),
+  openFile: (path: string): Promise<void> => ipcRenderer.invoke('open-file', path),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -11,6 +11,8 @@ export interface ElectronAPI {
   removeImageUpdatedListener: (listenerId: string) => void;
   getModels: (settings: Settings) => Promise<string[]>;
   removeImagesInFolder: (folderPath: string) => Promise<Image[]>;
+  removeImage: (image: Image) => Promise<void>;
+  openFile: (path: string) => Promise<void>;
 }
 
 declare global {

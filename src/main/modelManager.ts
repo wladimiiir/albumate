@@ -46,9 +46,9 @@ export class ModelManager {
 
       if (image) {
         try {
-          console.log(`Generating caption for image ${image.id}`);
+          console.log(`Generating caption for image ${image.path}`);
           const info = await this.generateImageInfo(image);
-          console.log(`Generated caption for image ${image.id}: ${info.caption}, tags: ${info.tags}, total cost: $${this.totalCost.toFixed(4)}`);
+          console.log(`Generated caption for image ${image.path}: ${info.caption}, tags: ${info.tags}, total cost: $${this.totalCost.toFixed(4)}`);
           image.caption = info.caption;
           image.tags = info.tags;
           image.processing = false;
@@ -56,12 +56,12 @@ export class ModelManager {
 
           this.totalCost += info.cost;
         } catch (error) {
-          console.error(`Failed to generate caption for image ${image.id}:`, error);
+          console.error(`Failed to generate caption for image ${image.path}:`, error);
           // add again to the queue as the last one
           if (retryCount < MAX_RETRY_COUNT) {
             this.queue.push({ image, retryCount: retryCount + 1 });
           } else {
-            console.error(`Failed to generate caption for image ${image.id} after ${MAX_RETRY_COUNT} retries.`);
+            console.error(`Failed to generate caption for image ${image.path} after ${MAX_RETRY_COUNT} retries.`);
             image.caption = 'Unknown';
             image.tags = [];
             image.processing = false;

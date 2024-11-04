@@ -90,7 +90,7 @@ const SettingsScreen: React.FC = () => {
               name="name"
               value={settings.modelProviderConfig.name}
               onChange={handleChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md"
             >
               <option value={ModelProviderName.OpenAI}>OpenAI</option>
               <option value={ModelProviderName.Ollama}>Ollama</option>
@@ -109,7 +109,7 @@ const SettingsScreen: React.FC = () => {
                   name="openAIBaseURL"
                   value={(settings.modelProviderConfig as OpenAIProviderConfig).openAIBaseURL}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                 />
               </div>
 
@@ -123,7 +123,7 @@ const SettingsScreen: React.FC = () => {
                   name="openAIApiKey"
                   value={(settings.modelProviderConfig as OpenAIProviderConfig).openAIApiKey}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                 />
               </div>
             </>
@@ -141,7 +141,7 @@ const SettingsScreen: React.FC = () => {
                 value={(settings.modelProviderConfig as OllamaProviderConfig).ollamaBaseURL}
                 onChange={handleChange}
                 onBlur={() => void loadModels()}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
               />
             </div>
           )}
@@ -155,7 +155,7 @@ const SettingsScreen: React.FC = () => {
               name="model"
               value={settings.modelProviderConfig.model}
               onChange={handleChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md"
             >
               {availableModels.map((model) => (
                 <option key={model} value={model}>
@@ -170,7 +170,7 @@ const SettingsScreen: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
         >
           <HiSave className="mr-2 h-5 w-5" />
           Save Settings
